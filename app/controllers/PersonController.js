@@ -1,8 +1,11 @@
 const personService = require('../services/PersonService');
+const userService = require('../services/UserService');
+const studiumService = require('../services/StudiumService');
+const dozentService = require('../services/DozentService');
 
 async function get(req, res, next) {
     try {
-        let persons = await personService.getAll()
+        let persons = await personService.getAll();
         res.json(persons);
     } catch (err) {
         console.error(`Error while getting persons`, err.message);
@@ -10,15 +13,53 @@ async function get(req, res, next) {
     }
 }
 
+async function getStudium(req, res, next) {
+    try {
+        let studien = await studiumService.getAll();
+        console.log(studien);
+        let studienContainer = [];
+
+        for(_studium in studien){
+            studienContainer.push({
+                studium: studien[_studium],
+                person: await personService.getOne(studien[_studium].personId)
+            });
+        }
+
+        console.log(studienContainer);
+        res.json(studienContainer);
+    } catch (err) {
+        console.error(`Error while getting studien`, err.message);
+        next(err);
+    }
+}
+
 async function create(req, res, next) {
     try {
         const personContainer = req.body;
-        const person = personContainer.person;
-        const student = personContainer.student;
-        const user = personContainer.user;
+        let person = personContainer.person;
+        let studium = personContainer.studium;
+        let user = personContainer.user;
 
+        let createdPerson = await personService.create(person);
+        let createdStudium = undefined;
+        let createdUser = undefined;
+        if(studium) {
+            studium.personId = createdPerson.insertedId;
+            createdStudium = await studiumService.create(studium);
+        }
+        if(user) {
+            user.personId = createdPerson.insertedId;
+            user.passwort = 'abcdefg'
+            createdUser = await userService.create(user);
+        }
 
-        res.json(await personService.create(req.body));
+        res.json({
+            person: createdPerson,
+            studium: createdStudium,
+            user: createdUser
+            }
+        );
     } catch (err) {
         console.error(`Error while creating person`, err.message);
         next(err);
@@ -47,6 +88,7 @@ async function remove(req, res, next) {
 
 module.exports = {
     get,
+    getStudium,
     create,
     update,
     remove

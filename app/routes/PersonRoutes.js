@@ -6,7 +6,7 @@ const personController = require('../controllers/PersonController');
 router.get('/person/get', personController.get);
 
 /* POST programming language */
-router.post('/person/create', personController.create);
+router.post('/person/create', express.json(), personController.create);
 
 /* PUT programming language */
 router.put('/person/put/:id', personController.update);
